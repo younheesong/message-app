@@ -1,4 +1,17 @@
-import { Avatar, Box, Button, Flex, FormControl, FormLabel, Text, Textarea, useToast, Switch } from '@chakra-ui/react';
+import {
+  Avatar,
+  Box,
+  Button,
+  Flex,
+  FormControl,
+  FormLabel,
+  Text,
+  Textarea,
+  useToast,
+  Switch,
+  VStack,
+} from '@chakra-ui/react';
+
 import { GetServerSideProps, NextPage } from 'next';
 import ResizeTextArea from 'react-textarea-autosize';
 import { useState } from 'react';
@@ -6,6 +19,7 @@ import axios, { AxiosResponse } from 'axios';
 import { ServiceLayout } from '@/components/service_layout';
 import { useAuth } from '@/contexts/auth_user_context';
 import { InAuthUser } from '@/models/in_auth_user';
+import MessageItem from '@/components/message_item';
 
 // const userInfo = {
 //   uid: 'test',
@@ -166,6 +180,35 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
             </FormLabel>
           </FormControl>
         </Box>
+
+        <VStack spacing="12px" mt="6">
+          {/* 댓글 있는 버전 */}
+          <MessageItem
+            uid="dkfj"
+            displayName="text"
+            isOwner={false}
+            photoURL={userInfo?.photoURL ?? 'https://bit.ly/broken-link'}
+            item={{
+              id: 'djf',
+              message: 'TEST',
+              createAt: '2022-06-30T20:15:15+09:00',
+              reply: 'reply',
+              replyAt: '2022-07-03T20:15:15+09:00',
+            }}
+          />
+          {/* 댓글 없는 버전 */}
+          <MessageItem
+            uid="dkfj"
+            displayName="text"
+            isOwner
+            photoURL={userInfo?.photoURL ?? 'https://bit.ly/broken-link'}
+            item={{
+              id: 'djf',
+              message: 'TEST',
+              createAt: '2022-04-30T20:15:15+09:00',
+            }}
+          />
+        </VStack>
       </Box>
     </ServiceLayout>
   );
