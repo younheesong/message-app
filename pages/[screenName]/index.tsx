@@ -20,6 +20,7 @@ import { ServiceLayout } from '@/components/service_layout';
 import { useAuth } from '@/contexts/auth_user_context';
 import { InAuthUser } from '@/models/in_auth_user';
 import MessageItem from '@/components/message_item';
+import { InMessage } from '@/models/message/in_message';
 
 interface Props {
   userInfo: InAuthUser | null;
@@ -80,6 +81,25 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
       if (resp.status === 200) {
         const data = await resp.json();
         setMessageList(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  async function fetchMessageInfo({ uid, messageId }: { uid: string; messageId: string }) {
+    try {
+      const resp = await fetch(`/api/messages.info?uid=${uid}&messageId=${messageId}`);
+      if (resp.status === 200) {
+        const data: InMessage = await resp.json();
+        setMessageList((prev) => {
+          const findIndex = prev.findIndex((fv) => fv.id === data.id);
+          if (findIndex >= 0) {
+            const updateArr = [...prev];
+            updateArr[findIndex] = data;
+            return updateArr;
+          }
+          return prev;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -162,6 +182,7 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
                   toast({ title: '메세지 등록 실패', position: 'top-right' });
                 }
                 setMessage('');
+                setMessageListFetchTrigger((prev) => !prev);
               }}
               bgColor="#ff886c"
               color="white"
@@ -194,7 +215,7 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
         </Box>
 
         <VStack spacing="12px" mt="6">
-          {messageList.map((messageData) => (
+          {messageList.map((messageData: InMessage) => (
             <MessageItem
               key={`message-item-${messageData.id}`}
               isOwner={authUser !== null && authUser.uid === userInfo.uid}
@@ -203,7 +224,7 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
               displayName={userInfo?.displayName ?? ''}
               photoURL={userInfo?.photoURL ?? 'https://bit.ly/broken-link'}
               onSendComplete={() => {
-                setMessageListFetchTrigger((prev) => !prev);
+                fetchMessageInfo({ uid: userInfo.uid, messageId: messageData.id });
               }}
             />
           ))}
