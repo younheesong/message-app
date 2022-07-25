@@ -21,12 +21,6 @@ import { useAuth } from '@/contexts/auth_user_context';
 import { InAuthUser } from '@/models/in_auth_user';
 import MessageItem from '@/components/message_item';
 
-// const userInfo = {
-//   uid: 'test',
-//   email: 'thd0563@gmail.com',
-//   displayName: 'younhee',
-//   photoURL: 'https://lh3.googleusercontent.com/a/AATXAJwMZHJHS_lptPJ-T3camKP4cotf4pa6jgE5CBDW=s96-c',
-// };
 interface Props {
   userInfo: InAuthUser | null;
 }
@@ -75,8 +69,10 @@ async function postMessage({
 const UserHomePage: NextPage<Props> = function ({ userInfo }) {
   const [message, setMessage] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
-  const toast = useToast();
   const [messageList, setMessageList] = useState([]);
+  const [messageListFetchTrigger, setMessageListFetchTrigger] = useState(false);
+  const toast = useToast();
+
   const { authUser } = useAuth();
   async function fetchMessageList(uid: string) {
     try {
@@ -92,7 +88,7 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
   useEffect(() => {
     if (userInfo === null) return;
     fetchMessageList(userInfo.uid);
-  }, [userInfo]);
+  }, [userInfo, messageListFetchTrigger]);
   if (userInfo === null) {
     return <p>사용자를 찾을 수 없습니다.</p>;
   }
@@ -206,6 +202,9 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
               uid={userInfo.uid}
               displayName={userInfo?.displayName ?? ''}
               photoURL={userInfo?.photoURL ?? 'https://bit.ly/broken-link'}
+              onSendComplete={() => {
+                setMessageListFetchTrigger((prev) => !prev);
+              }}
             />
           ))}
         </VStack>

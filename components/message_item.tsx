@@ -1,5 +1,6 @@
 import { Box, Avatar, Flex, Text, Divider, Textarea, Button } from '@chakra-ui/react';
 import ResizeTextArea from 'react-textarea-autosize';
+import { useState } from 'react';
 import { InMessage } from '@/models/message/in_message';
 import convertDateToString from '@/utils/convert_date_to_string';
 
@@ -9,8 +10,26 @@ interface Props {
   photoURL: string;
   isOwner: boolean;
   item: InMessage;
+  onSendComplete: () => void;
 }
-const MessageItem = function ({ item, uid, isOwner, displayName, photoURL }: Props) {
+const MessageItem = function ({ item, uid, isOwner, displayName, photoURL, onSendComplete }: Props) {
+  const [reply, setReply] = useState('');
+
+  async function postReply() {
+    const resp = await fetch('/api/messages.add.reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid,
+        messageId: item.id,
+        reply,
+      }),
+    });
+    console.log(resp.status);
+    if (resp.status < 300) {
+      onSendComplete();
+    }
+  }
   const haveReply = item.reply !== undefined;
   return (
     <Box borderRadius="md" width="full" bg="white" boxShadow="md">
@@ -70,9 +89,20 @@ const MessageItem = function ({ item, uid, isOwner, displayName, photoURL }: Pro
                   placeholder="댓글을 입력해주세요."
                   as={ResizeTextArea}
                   maxRows={7}
+                  value={reply}
+                  onChange={(e) => {
+                    setReply(e.currentTarget.value);
+                  }}
                 />
               </Box>
-              <Button colorScheme="pink" bgColor="#ff75b5" variant="solid" size="sm">
+              <Button
+                disabled={reply.length === 0}
+                onClick={() => postReply()}
+                colorScheme="pink"
+                bgColor="#ff75b5"
+                variant="solid"
+                size="sm"
+              >
                 등록
               </Button>
             </Box>
