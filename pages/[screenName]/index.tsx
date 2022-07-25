@@ -14,7 +14,7 @@ import {
 
 import { GetServerSideProps, NextPage } from 'next';
 import ResizeTextArea from 'react-textarea-autosize';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
 import { ServiceLayout } from '@/components/service_layout';
 import { useAuth } from '@/contexts/auth_user_context';
@@ -76,7 +76,23 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
   const [message, setMessage] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
   const toast = useToast();
+  const [messageList, setMessageList] = useState([]);
   const { authUser } = useAuth();
+  async function fetchMessageList(uid: string) {
+    try {
+      const resp = await fetch(`/api/messages.list?uid=${uid}`);
+      if (resp.status === 200) {
+        const data = await resp.json();
+        setMessageList(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  useEffect(() => {
+    if (userInfo === null) return;
+    fetchMessageList(userInfo.uid);
+  }, [userInfo]);
   if (userInfo === null) {
     return <p>사용자를 찾을 수 없습니다.</p>;
   }
@@ -182,32 +198,16 @@ const UserHomePage: NextPage<Props> = function ({ userInfo }) {
         </Box>
 
         <VStack spacing="12px" mt="6">
-          {/* 댓글 있는 버전 */}
-          <MessageItem
-            uid="dkfj"
-            displayName="text"
-            isOwner={false}
-            photoURL={userInfo?.photoURL ?? 'https://bit.ly/broken-link'}
-            item={{
-              id: 'djf',
-              message: 'TEST',
-              createAt: '2022-06-30T20:15:15+09:00',
-              reply: 'reply',
-              replyAt: '2022-07-03T20:15:15+09:00',
-            }}
-          />
-          {/* 댓글 없는 버전 */}
-          <MessageItem
-            uid="dkfj"
-            displayName="text"
-            isOwner
-            photoURL={userInfo?.photoURL ?? 'https://bit.ly/broken-link'}
-            item={{
-              id: 'djf',
-              message: 'TEST',
-              createAt: '2022-04-30T20:15:15+09:00',
-            }}
-          />
+          {messageList.map((messageData) => (
+            <MessageItem
+              key={`message-item-${messageData.id}`}
+              isOwner={authUser !== null && authUser.uid === userInfo.uid}
+              item={messageData}
+              uid={userInfo.uid}
+              displayName={userInfo?.displayName ?? ''}
+              photoURL={userInfo?.photoURL ?? 'https://bit.ly/broken-link'}
+            />
+          ))}
         </VStack>
       </Box>
     </ServiceLayout>
